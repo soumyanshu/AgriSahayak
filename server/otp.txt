@@ -1,0 +1,9 @@
+=================================
+New Email Sent:
+To: soumyanshusahoo30@gmail.com
+Subject: AgriSahayak - Reset Password OTP
+
+You requested a password reset.
+Your OTP is: 622307
+It will expire in 2 minutes.
+=================================

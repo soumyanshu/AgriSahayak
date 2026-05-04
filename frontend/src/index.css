@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2e7d32;
+  --color-accent: #fbc02d;
+  --color-dark: #1b1b1b;
+  --color-light: #f4f7f6;
+  --color-white: #ffffff;
+}
+
+body {
+  background: var(--light);
+  color: var(--dark);
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  top: 0 !important;
+}
+
+/* Google Translate Customization */
+iframe.goog-te-banner-frame,
+iframe.skiptranslate {
+  display: none !important;
+}
+
+body {
+  top: 0px !important;
+}
+
+.goog-te-gadget {
+  color: transparent !important;
+  font-size: 0 !important;
+  display: flex !important;
+  align-items: center;
+}
+
+/* Hide the Google logo and image but do not hide ALL spans, as the <select> tag is often inside a span! */
+.goog-logo-link,
+.goog-te-gadget img {
+  display: none !important;
+}
+
+/* Hide the "Powered by" text nodes by turning off text rendering inside the gadget specifically */
+.goog-te-gadget * {
+  color: transparent !important;
+}
+
+/* Only make the dropdown visible with normal text */
+.goog-te-gadget .goog-te-combo {
+  color: var(--color-dark) !important;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px !important;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  outline: none;
+  background-color: var(--color-white);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0 !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+.goog-te-gadget .goog-te-combo * {
+  color: var(--color-dark) !important;
+}
+
+.goog-te-gadget .goog-te-combo:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+}
