@@ -4,9 +4,9 @@ from flask_cors import CORS
 import pickle
 import pandas as pd
 import os
-import torch
-import torch.nn as nn
-from torchvision import models, transforms
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import img_to_array
+import numpy as np
 from PIL import Image
 import io
 import json
@@ -27,39 +27,33 @@ else:
     print("Warning: model.pkl not found. Please run train.py first.")
 
 # --- Disease Detection Setup ---
-disease_model_path = 'disease_model.pth'
+disease_model_path = 'agri_smart_full_model.h5'
 classes_path = 'disease_classes.json'
 
 groq_client = Groq(api_key="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")
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if os.path.exists(disease_model_path) and os.path.exists(classes_path):
     with open(classes_path, 'r') as f:
         disease_classes = json.load(f)
         
-    disease_model = models.mobilenet_v2(weights=None)
-    num_ftrs = disease_model.classifier[1].in_features
-    disease_model.classifier[1] = nn.Linear(num_ftrs, len(disease_classes))
-    
-    disease_model.load_state_dict(torch.load(disease_model_path, map_location=device, weights_only=True))
-    disease_model = disease_model.to(device)
-    disease_model.eval()
-    print("Disease model loaded successfully.")
+    try:
+        disease_model = tf.keras.models.load_model(disease_model_path, compile=False)
+        print("Disease model loaded successfully.")
+    except Exception as e:
+        print(f"Error loading disease model: {e}")
+        disease_model = None
 else:
     disease_model = None
     disease_classes = []
-    print("Warning: disease_model.pth not found. Please run train_disease.py.")
+    print("Warning: agri_smart_full_model.h5 or disease_classes.json not found.")
 
 def process_image(image_bytes):
-    transform = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
     image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
-    return transform(image).unsqueeze(0)
+    image = image.resize((224, 224))
+    img_array = img_to_array(image)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array = img_array / 255.0
+    return img_array
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -106,15 +100,15 @@ def predict_disease():
     try:
         file = request.files['image']
         image_bytes = file.read()
-        tensor = process_image(image_bytes).to(device)
+        tensor = process_image(image_bytes)
         
-        with torch.no_grad():
-            outputs = disease_model(tensor)
-            probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
-            confidence, predicted_idx = torch.max(probabilities, 0)
+        outputs = disease_model.predict(tensor)
+        probabilities = outputs[0]
+        predicted_idx = int(np.argmax(probabilities))
+        confidence = float(probabilities[predicted_idx])
             
-        class_name = disease_classes[predicted_idx.item()]
-        conf_percentage = round(confidence.item() * 100, 2)
+        class_name = disease_classes[predicted_idx]
+        conf_percentage = round(confidence * 100, 2)
         
         clean_name = class_name.replace('___', ' ').replace('__', ' ').replace('_', ' ')
         if clean_name.lower() == "plantvillage":
