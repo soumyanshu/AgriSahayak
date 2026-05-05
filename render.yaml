@@ -8,3 +8,10 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.0
+
+  - type: web
+    name: agrisahayak-backend-server
+    env: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node index.js
