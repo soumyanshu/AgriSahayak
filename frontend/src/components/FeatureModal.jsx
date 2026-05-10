@@ -1740,7 +1740,7 @@ const FeatureModal = ({ featureId, onClose, weatherData }) => {
                     }
 
                     const options = {
-                        key: "rzp_test_Sk0wFGFowBuZhu", // Test API Key
+                        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_Sk0wFGFowBuZhu", // Use env variable or fallback to test key
                         amount: data.amount,
                         currency: "INR",
                         name: "AgriSahayak",
