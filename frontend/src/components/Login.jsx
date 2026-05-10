@@ -185,7 +185,7 @@ const Login = () => {
             setTimeout(() => navigate('/dashboard'), 1000);
         } catch (error) {
             console.error(error);
-            showToast("Google Login failed or was cancelled.", "error");
+            showToast(`Login failed: ${error.message || 'Cancelled'}`, "error");
         }
     };
 
