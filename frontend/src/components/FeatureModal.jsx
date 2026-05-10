@@ -681,7 +681,7 @@ const FeatureModal = ({ featureId, onClose, weatherData }) => {
     const handleCropSubmit = async () => {
         setCropLoading(true);
         try {
-            const response = await fetch('http://127.0.0.1:5001/predict', {
+            const response = await fetch(`${import.meta.env.VITE_AI_URL || 'http://127.0.0.1:5001'}/predict`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1006,7 +1006,7 @@ const FeatureModal = ({ featureId, onClose, weatherData }) => {
                                     try {
                                         const formData = new FormData();
                                         formData.append('image', pestFile);
-                                        const response = await fetch('http://127.0.0.1:5001/predict_disease', {
+                                        const response = await fetch(`${import.meta.env.VITE_AI_URL || 'http://127.0.0.1:5001'}/predict_disease`, {
                                             method: 'POST',
                                             body: formData
                                         });
