@@ -32,24 +32,31 @@ classes_path = 'disease_classes.json'
 
 groq_client = Groq(api_key="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")
 
-if os.path.exists(disease_model_path) and os.path.exists(classes_path):
-    with open(classes_path, 'r') as f:
-        disease_classes = json.load(f)
+disease_model = None
+disease_classes = []
+
+def get_disease_model():
+    global disease_model, disease_classes
+    if disease_model is not None:
+        return disease_model
         
-    try:
-        disease_model = tf.keras.models.load_model(disease_model_path, compile=False)
-        print("Disease model loaded successfully. Warming up...")
-        # Dummy prediction to prevent the first request from hanging
-        dummy_input = np.zeros((1, 224, 224, 3), dtype=np.float32)
-        disease_model.predict(dummy_input, verbose=0)
-        print("Disease model warmed up successfully.")
-    except Exception as e:
-        print(f"Error loading disease model: {e}")
-        disease_model = None
-else:
-    disease_model = None
-    disease_classes = []
-    print("Warning: agri_smart_full_model.h5 or disease_classes.json not found.")
+    if os.path.exists(disease_model_path) and os.path.exists(classes_path):
+        with open(classes_path, 'r') as f:
+            disease_classes = json.load(f)
+            
+        try:
+            disease_model = tf.keras.models.load_model(disease_model_path, compile=False)
+            print("Disease model loaded lazily. Warming up...")
+            dummy_input = np.zeros((1, 224, 224, 3), dtype=np.float32)
+            disease_model.predict(dummy_input, verbose=0)
+            print("Disease model warmed up successfully.")
+        except Exception as e:
+            print(f"Error loading disease model: {e}")
+            disease_model = None
+    else:
+        print("Warning: agri_smart_full_model.h5 or disease_classes.json not found.")
+        
+    return disease_model
 
 def process_image(image_bytes):
     image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
@@ -95,7 +102,8 @@ def predict():
 
 @app.route('/predict_disease', methods=['POST'])
 def predict_disease():
-    if disease_model is None:
+    model_instance = get_disease_model()
+    if model_instance is None:
         return jsonify({"error": "Disease model not trained yet."}), 500
         
     if 'image' not in request.files:
@@ -106,7 +114,7 @@ def predict_disease():
         image_bytes = file.read()
         tensor = process_image(image_bytes)
         
-        outputs = disease_model.predict(tensor)
+        outputs = model_instance.predict(tensor)
         probabilities = outputs[0]
         predicted_idx = int(np.argmax(probabilities))
         confidence = float(probabilities[predicted_idx])
