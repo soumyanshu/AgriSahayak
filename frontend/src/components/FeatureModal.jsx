@@ -466,6 +466,13 @@ const ActivitySummaryView = () => {
 };
 
 const FeatureModal = ({ featureId, onClose, weatherData }) => {
+    useEffect(() => {
+        // Ping the AI service to wake it up in case it's asleep
+        fetch(`${import.meta.env.VITE_AI_URL || 'https://agrisahayak-ai-service.onrender.com'}/predict`, {
+            method: 'OPTIONS'
+        }).catch(() => {});
+    }, []);
+
     // Local state for some forms
     const [cropLoading, setCropLoading] = useState(false);
     const [cropResult, setCropResult] = useState(null);
@@ -707,7 +714,11 @@ const FeatureModal = ({ featureId, onClose, weatherData }) => {
                 setCropResult("Error: " + data.error);
             }
         } catch(e) {
-            setCropResult(e.message || "Connection Error");
+            let msg = e.message;
+            if (msg && (msg.includes("Failed to fetch") || msg.includes("NetworkError"))) {
+                msg = "The AI service is waking up from sleep. Please wait a minute and try again.";
+            }
+            setCropResult(msg || "Connection Error");
         }
         setCropLoading(false);
     };
@@ -1029,7 +1040,11 @@ const FeatureModal = ({ featureId, onClose, weatherData }) => {
                                             setPestResult({ error: data.error || "Failed to analyze image." });
                                         }
                                     } catch(e) {
-                                        setPestResult({ error: e.message || "Connection error. Make sure the AI service is running." });
+                                        let msg = e.message;
+                                        if (msg && (msg.includes("Failed to fetch") || msg.includes("NetworkError"))) {
+                                            msg = "The AI service is waking up from sleep. Please wait a minute and try again.";
+                                        }
+                                        setPestResult({ error: msg || "Connection error. Make sure the AI service is running." });
                                     }
                                     setPestLoading(false);
                                 }}
