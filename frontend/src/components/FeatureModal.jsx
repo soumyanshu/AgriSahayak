@@ -681,7 +681,7 @@ const FeatureModal = ({ featureId, onClose, weatherData }) => {
     const handleCropSubmit = async () => {
         setCropLoading(true);
         try {
-            const response = await fetch(`${import.meta.env.VITE_AI_URL || 'http://127.0.0.1:5001'}/predict`, {
+            const response = await fetch(`${import.meta.env.VITE_AI_URL || 'https://agrisahayak-ai-service.onrender.com'}/predict`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -694,6 +694,12 @@ const FeatureModal = ({ featureId, onClose, weatherData }) => {
                     rainfall: cropFormData.rainfall || 0
                 })
             });
+            if (!response.ok) {
+                if (response.status === 502 || response.status === 504) {
+                    throw new Error("AI service is currently waking up. Please try again in a few seconds.");
+                }
+                throw new Error(`Server returned ${response.status}`);
+            }
             const data = await response.json();
             if(data.success) {
                 setCropResult(data.recommendation);
@@ -701,7 +707,7 @@ const FeatureModal = ({ featureId, onClose, weatherData }) => {
                 setCropResult("Error: " + data.error);
             }
         } catch(e) {
-            setCropResult("Connection Error");
+            setCropResult(e.message || "Connection Error");
         }
         setCropLoading(false);
     };
@@ -1006,10 +1012,16 @@ const FeatureModal = ({ featureId, onClose, weatherData }) => {
                                     try {
                                         const formData = new FormData();
                                         formData.append('image', pestFile);
-                                        const response = await fetch(`${import.meta.env.VITE_AI_URL || 'http://127.0.0.1:5001'}/predict_disease`, {
+                                        const response = await fetch(`${import.meta.env.VITE_AI_URL || 'https://agrisahayak-ai-service.onrender.com'}/predict_disease`, {
                                             method: 'POST',
                                             body: formData
                                         });
+                                        if (!response.ok) {
+                                            if (response.status === 502 || response.status === 504) {
+                                                throw new Error("The AI service is waking up from sleep. Please try again in about 50 seconds.");
+                                            }
+                                            throw new Error(`Server returned ${response.status}`);
+                                        }
                                         const data = await response.json();
                                         if(data.success) {
                                             setPestResult(data);
@@ -1017,7 +1029,7 @@ const FeatureModal = ({ featureId, onClose, weatherData }) => {
                                             setPestResult({ error: data.error || "Failed to analyze image." });
                                         }
                                     } catch(e) {
-                                        setPestResult({ error: "Connection error. Make sure the AI service is running." });
+                                        setPestResult({ error: e.message || "Connection error. Make sure the AI service is running." });
                                     }
                                     setPestLoading(false);
                                 }}
