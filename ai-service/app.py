@@ -38,7 +38,11 @@ if os.path.exists(disease_model_path) and os.path.exists(classes_path):
         
     try:
         disease_model = tf.keras.models.load_model(disease_model_path, compile=False)
-        print("Disease model loaded successfully.")
+        print("Disease model loaded successfully. Warming up...")
+        # Dummy prediction to prevent the first request from hanging
+        dummy_input = np.zeros((1, 224, 224, 3), dtype=np.float32)
+        disease_model.predict(dummy_input, verbose=0)
+        print("Disease model warmed up successfully.")
     except Exception as e:
         print(f"Error loading disease model: {e}")
         disease_model = None
@@ -134,6 +138,7 @@ def predict_disease():
                     model="llama3-8b-8192",
                     temperature=0.5,
                     max_tokens=100,
+                    timeout=5,
                 )
                 rec = chat_completion.choices[0].message.content.strip()
             except Exception as e:
